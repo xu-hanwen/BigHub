@@ -7,7 +7,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 def main():
     # sonar数据集
     print("Sonar数据集结果：")
-    url1 = 'Data/sonar/sonar.all-data'
+    url1 = 'Fisher/Data/sonar/sonar.all-data'
     dateSet = dp.load_dataset(url1)
     dimension_ = 1
 
@@ -33,7 +33,7 @@ def main():
 
     #iris数据集
     print('\nIris数据集结果：')
-    url2 = 'Data/iris/iris.data'
+    url2 = 'Fisher/Data/iris/iris.data'
     dateset = dp.load_dataset(url2)
     dimension = 2
 
