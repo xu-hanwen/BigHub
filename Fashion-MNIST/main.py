@@ -17,7 +17,7 @@ def data_loader():
         transforms.ToTensor()
     ])
     test_trans = transforms.ToTensor()
-    url = './Data'
+    url = './Fashion-MNIST/Data'
     trainset = torchvision.datasets.FashionMNIST(root=url,train=True,download=True,transform=train_trans)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=100,
                                               shuffle=True, num_workers=4)
