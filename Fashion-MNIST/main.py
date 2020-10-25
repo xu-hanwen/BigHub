@@ -24,9 +24,9 @@ def data_loader():
     testset = torchvision.datasets.FashionMNIST(root=url,train=False,download=True,transform=test_trans)
     testloader = torch.utils.data.DataLoader(testset, batch_size=100,
                                              shuffle=False, num_workers=4)
-    # print(len(trainset),len(testset))
-    # feature,label = trainset[0]
-    # print(feature.shape,label)
+    print(len(trainset),len(testset))
+    feature,label = trainset[0]
+    print(feature.shape,label)
     return trainloader,testloader
 
 def imshow(trainloader):
@@ -252,7 +252,7 @@ class Net_2(nn.Module):
 if __name__ == '__main__':
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    # print(device)
+    print(device)
     # net = Net()
     net = Net_2()
     net = net.to(device)
