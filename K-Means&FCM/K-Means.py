@@ -77,18 +77,8 @@ class K_means():
                 X1 = np.array([features[j] for j in range(len(features)) if labels[j] == i])
                 L1 = np.array([label_[j] for j in range(len(features)) if labels[j] == i])
                 # L1 = i
-                aa_cont = [i == x for x in L1]
-                if L1.all() == i:
-                    aa_count + 1
+                aa_cont = sum([i == x for x in L1])
                 acc_aa[i] = float(aa_count)/float(len(X1))
-                # for data in range(len(X1)):
-                    # distances = []
-                    # for center in self.centers:
-                        # distances.append(np.linalg.norm(X1[data] - self.centers[center]))
-                    # label_predict = distances.index(min(distances))
-                    # if L1 == label_predict:
-                        # aa_count += 1
-                # acc_aa[i] = float(aa_count) / float(len(X1))  # OA指标
         return acc_oa,acc_aa
 
 if __name__ == '__main__':
