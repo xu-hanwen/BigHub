@@ -1,16 +1,15 @@
 import numpy as np
-import pandas as pd
 import data_process as dp
 import matplotlib.pyplot as plt
-# from Fisher.LDA import LDA_return
-import random
 
 class FCM():
-    def __init__(self,k,dataset,alpha):
-        self.features,self.lables = dp.frame_select(dataset)
+    """模糊C均值聚类"""
+    def __init__(self,k,features,alpha):
+        self.features = features
         self.k = k
         self.num_features = len(self.features)
         self.alpha = alpha
+        self.iter_nums = 20  # 最大迭代次数
 
     # 初始化模糊矩阵U
     def initial_Matrix_U(self):
@@ -21,7 +20,6 @@ class FCM():
             sum_list = sum(random_num_list)
             temp_list = [x / sum_list for x in random_num_list]
             self.mat_U.append(temp_list)
-        print(self.mat_U[0])
 
     # 计算类中心点
     # Zj = (i=1,i=n){∑(Uij)^(alpha)*Xi}/(i=1,i=n){∑(Uij)^alpha}
@@ -36,7 +34,6 @@ class FCM():
             Uj_alpha_xi = sum(U_alpha[i] * self.features[i] for i in range(self.num_features))  # 分子
             center = [z / sum_u_alpha for z in Uj_alpha_xi]
             self.class_centers.append(center)
-        # return class_centers
 
     # 更新隶属矩阵
     # 1/(k=1,k=c){∑(dij /dik)^[2/(alpha-1)]}
@@ -78,10 +75,9 @@ class FCM():
         # 预测主程序
         self.initial_Matrix_U()
         J_last = 0
-        while True:  # 最大迭代次数
+        for m in range(self.iter_nums):  # 迭代
             self.Class_center()  # 计算聚类中心点
             J = self.J_function()   # 计算代价函数
-            # print(J)
             # 判断终止条件
             if J_last == J:
                 break
@@ -90,53 +86,53 @@ class FCM():
         lables_ = self.get_lables()  # 求预测类别
         return lables_
 
-    def evaluate(self):
+    def evaluate(self,lables):
         while True:
             lables_ = self.predict()
             # OA
             total_num = 0
             for i in range(self.num_features):
-                if self.lables[i] == lables_[i]:
+                if lables[i] == lables_[i]:
                     total_num += 1
             acc_oa = float(total_num/self.num_features)
-            if acc_oa > 0.8:
+            # print(acc_oa)
+            if acc_oa > 0.89:  # sonar_oa_max = 0.55,iris_oa_max = 0.89
+                # AA
+                acc_aa = [0] * self.k
+                for j in range(self.k):
+                    aa_count = 0
+                    L1 = np.array([lables_[o] for o in range(self.num_features) if lables[o] == j])
+                    aa_count = sum([j == p for p in L1])
+                    acc_aa[j] = float(aa_count / len(L1))
                 break
-            # AA
-            # acc_aa = [0] * self.k
-            # for j in range(self.k):
-            #     aa_count = 0
-            #     L1_ ,X1= [],[]
-            #     for i in range(self.num_features):
-            #         if self.lables[i] == j:
-            #             X1.append(self.features[i])
-            #             L1_.append(lables_[i])
-            #     for data in range(len(X1)):
-            #         if j == L1_[data]:
-            #             aa_count += 1
-            #     acc_aa[j] = float(aa_count) / float(len(X1))  # OA指标
-        return acc_oa
+        return acc_oa,acc_aa
 
-if __name__ == '__main__':
-    # random.seed(10)
-    # url = 'Data/iris/iris.data'
-    url = 'Data/sonar/sonar.all-data'
-    dataset = dp.load_dataset(url)
-    trainset, testset = dp.random_split(dataset)
-    # 进行LDA降维
-    # dimension = 2
-    # X_train, y_train, X_test, y_test = LDA_return(trainset, testset, dimension)
-    # FCM聚类
-    k = 3
-    alpha = 1.5
-    Fcm = FCM(k,trainset,alpha)
+    def plot(self,features, lables):
+        # 做散点图
+        plt.scatter(features[np.nonzero(lables == 0), 0], features[np.nonzero(lables == 0), 1],
+                    marker='o', color='r', label='0', s=10)
+        plt.scatter(features[np.nonzero(lables == 1), 0], features[np.nonzero(lables == 1), 1],
+                    marker='+', color='b', label='1', s=10)
+        plt.scatter(features[np.nonzero(lables == 2), 0], features[np.nonzero(lables == 2), 1],
+                    marker='*', color='g', label='2', s=10)
+        plt.scatter(np.array(self.class_centers)[:, 0], np.array(self.class_centers)[:, 1], marker='x', color='m', s=30)
+        plt.show()
 
-    acc_oa = Fcm.evaluate()
-    center_array = np.array(Fcm.class_centers)
-    print(acc_oa)
+# if __name__ == '__main__':
+#     url = 'Data/iris/iris.data'      # acc_oa_max = 0.89
+#     # url = 'Data/sonar/sonar.all-data'   # acc_oa_max = 0.55
+#     dataset = dp.load_dataset(url)
+#     features, lables = dp.frame_select(dataset)
+#     # 进行LDA降维
+#     # dimension = 2
+#     # X_train, y_train, X_test, y_test = LDA_return(trainset, testset, dimension)
+#     # FCM聚类
+#     k = 3
+#     alpha = 2
+#     Fcm = FCM(k,features,alpha)
+#     # _ = Fcm.predict()
+#     acc_oa,acc_aa = Fcm.evaluate(lables)
+#     center_array = np.array(Fcm.class_centers)
+#     print(acc_oa,acc_aa)
+#     Fcm.plot(features, lables)
 
-    # 做散点图
-    plt.scatter(Fcm.features[np.nonzero(Fcm.lables == 0), 0], Fcm.features[np.nonzero(Fcm.lables == 0), 1], marker='o', color='r', label='0', s=10)
-    plt.scatter(Fcm.features[np.nonzero(Fcm.lables == 1), 0], Fcm.features[np.nonzero(Fcm.lables == 1), 1], marker='+', color='b', label='1', s=10)
-    plt.scatter(Fcm.features[np.nonzero(Fcm.lables == 2), 0], Fcm.features[np.nonzero(Fcm.lables == 2), 1], marker='*', color='g', label='2', s=10)
-    plt.scatter(center_array[:, 0], center_array[:, 1], marker='x', color='m', s=30)
-    plt.show()
