@@ -1,5 +1,7 @@
 import numpy as np
+import pandas as pd
 import data_process as dp
+import matplotlib.pyplot as plt
 
 class K_means():
     def __init__(self,dataset,k):
@@ -13,7 +15,6 @@ class K_means():
         self.centers = {}
         for i in range(self.k):
             self.centers[i]=self.feature[np.random.randint(0,len(self.feature))]
-        # print(self.centers)
 
         while True:  # 迭代
             # 初始化模型结果
@@ -69,25 +70,32 @@ class K_means():
                     oa_count += 1
             acc_oa = float(oa_count)/float(len(features))  # OA指标
             print(acc_oa)
-            if acc_oa>0.93:  # 不断试聚类中心的初值
+            if acc_oa>0.58:  # 不断试聚类中心的初值
                 # AA
                 acc_aa = [0] * self.k
                 for m in range(self.k):
                     aa_count = 0
                     # 根据类别信息拆分数据
-                    X1 = np.array([features[n] for n in range(len(features)) if labels[n] == m])
                     L1 = np.array([label_[o] for o in range(len(features)) if labels[o] == m])
                     aa_count = sum([m == p for p in L1])
                     if aa_count != 0:
-                        acc_aa[m] = float(aa_count/len(X1))
+                        acc_aa[m] = float(aa_count/len(L1))
                 break
         return acc_oa,acc_aa
 
 if __name__ == '__main__':
-    url = 'Data/iris/iris.data'
-    # url = 'Data/sonar/sonar.all-data'
+    url = 'Data/iris/iris.data'   # oa_max = 0.93
+    # url = 'Data/sonar/sonar.all-data'  # oa_max = 0.58
     dateset = dp.load_dataset(url)
     trainset,testset = dp.random_split(dateset)
-    k_means = K_means(trainset,3)
+    k = 3
+    k_means = K_means(trainset,k)
     acc_oa,acc_aa = k_means.evaluate(testset)
     print(acc_oa,acc_aa)
+    centers = pd.DataFrame(k_means.centers)
+
+    plt.scatter(k_means.feature[np.nonzero(k_means.label == 0), 0], k_means.feature[np.nonzero(k_means.label == 0), 1], marker='o', color='r', label='0', s=10)
+    plt.scatter(k_means.feature[np.nonzero(k_means.label == 1), 0], k_means.feature[np.nonzero(k_means.label == 1), 1], marker='+', color='b', label='1', s=10)
+    plt.scatter(k_means.feature[np.nonzero(k_means.label == 2), 0], k_means.feature[np.nonzero(k_means.label == 2), 1], marker='*', color='g', label='2', s=10)
+    plt.scatter(centers.iloc[0,:].values,centers.iloc[1,:].values, marker='x', color='m', s=30)
+    plt.show()
