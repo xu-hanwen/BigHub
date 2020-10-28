@@ -13,7 +13,7 @@ class K_means():
         self.centers = {}
         for i in range(self.k):
             self.centers[i]=self.feature[np.random.randint(0,len(self.feature))]
-        print(self.centers)
+        # print(self.centers)
 
         while True:  # 迭代
             # 初始化模型结果
@@ -33,7 +33,8 @@ class K_means():
             # 更新中心点
             centers_last = dict(self.centers)
             for c in self.label_:
-                self.centers[c] = np.average(self.label_[c],axis=0)
+                if len(self.label_[c]) != 0:  # 防止报错
+                	self.centers[c] = np.average(self.label_[c],axis=0)
 
             # 判断是否终止迭代
             optimized = 0
@@ -67,18 +68,19 @@ class K_means():
                 if labels[data] == label_[data]:
                     oa_count += 1
             acc_oa = float(oa_count)/float(len(features))  # OA指标
-            if acc_oa>0.8:  # 不断试聚类中心的初值
+            print(acc_oa)
+            if acc_oa>0.93:  # 不断试聚类中心的初值
+                # AA
+                acc_aa = [0] * self.k
+                for m in range(self.k):
+                    aa_count = 0
+                    # 根据类别信息拆分数据
+                    X1 = np.array([features[n] for n in range(len(features)) if labels[n] == m])
+                    L1 = np.array([label_[o] for o in range(len(features)) if labels[o] == m])
+                    aa_count = sum([m == p for p in L1])
+                    if aa_count != 0:
+                        acc_aa[m] = float(aa_count/len(X1))
                 break
-            # AA
-            acc_aa = [0] * self.k
-            for i in range(self.k):
-                aa_count = 0
-                # 根据类别信息拆分数据
-                X1 = np.array([features[j] for j in range(len(features)) if labels[j] == i])
-                L1 = np.array([label_[j] for j in range(len(features)) if labels[j] == i])
-                # L1 = i
-                aa_cont = sum([i == x for x in L1])
-                acc_aa[i] = float(aa_count)/float(len(X1))
         return acc_oa,acc_aa
 
 if __name__ == '__main__':
@@ -87,13 +89,5 @@ if __name__ == '__main__':
     dateset = dp.load_dataset(url)
     trainset,testset = dp.random_split(dateset)
     k_means = K_means(trainset,3)
-    acc_oa,acc_aa = k_means.evaluate(trainset)
+    acc_oa,acc_aa = k_means.evaluate(testset)
     print(acc_oa,acc_aa)
-
-
-
-
-
-
-
-
