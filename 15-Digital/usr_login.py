@@ -8,7 +8,7 @@ windows.geometry('450x300')
 
 # welcom 界面
 canvas = tk.Canvas(windows,height=200,width=500)
-image_file = tk.PhotoImage(file='welcome.gif')
+image_file = tk.PhotoImage(file='pictures/welcome.gif')
 image = canvas.create_image(0,0,anchor='nw',image=image_file)
 canvas.pack(side='top')
 

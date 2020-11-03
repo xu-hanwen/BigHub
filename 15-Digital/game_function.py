@@ -1,83 +1,128 @@
-import pygame,random
+import pygame,random,sys
 from settings import *
+from pygame.locals import *  # 导入常量变量
 
-def get_start_board():
-    """生成目标状态"""
-    # board = [[1,5,9,13],[2,6,10,14],[3,7,11,15],[4,8,12,None]]
+def terminate():
+        # 程序退出函数
+        pygame.quit()
+        sys.exit()
+
+def checkForQuit():
+    """检查强制退出"""
+    # quit和espace
+    for event in pygame.event.get(QUIT):
+        terminate()
+    for event in pygame.event.get(KEYUP): # get all the KEYUP events
+        if event.key == K_ESCAPE:
+            terminate()
+        pygame.event.post(event) # put the other KEYUP event objects back
+
+def getStartingBoard():
+    # 返回目标状态
+    # For example, if BOARDWIDTH and BOARDHEIGHT are both 3, this function
+    # returns [[1, 4, 7], [2, 5, 8], [3, 6, BLANK]]
+    counter = 1
     board = []
-    for x in range(BOARD_SIZE):
-        conter = 1+x  # 在此记录第一行数字信息
-        column = []   # 记录y轴数字信息
-        for y in range(BOARD_SIZE):
-            column.append(conter)
-            conter += BOARD_SIZE  # 在此记录每一列中的数字
+    for x in range(BOARDWIDTH):
+        column = []
+        for y in range(BOARDHEIGHT):
+            column.append(counter)
+            counter += BOARDWIDTH
         board.append(column)
-    board[BOARD_SIZE-1][BOARD_SIZE-1] = None  # 最后一个滑块是空的
+        counter -= BOARDWIDTH * (BOARDHEIGHT - 1) + BOARDWIDTH - 1
+
+    board[BOARDWIDTH-1][BOARDHEIGHT-1] = BLANK
     return board
 
-def get_blank_index(board):
-    """返回空白滑块的索引"""
-    for x in range(BOARD_SIZE):
-        for y in range(BOARD_SIZE):
-            if board[x][y] == None:
-                return (x,y)
 
-def make_move(board,move):
-    """滑块数值更新"""
-    blank_x,blank_y = get_blank_index(board)
+def getBlankPosition(board):
+    # 返回空白格子索引
+    for x in range(BOARDWIDTH):
+        for y in range(BOARDHEIGHT):
+            if board[x][y] == BLANK:
+                return (x, y)
+
+
+def makeMove(board, move):
+    # 移动方块
+    blankx, blanky = getBlankPosition(board)  # 返回空白格子索引
+    # 方块移动不是空格
     if move == UP:
-        board[blank_x][blank_y],board[blank_x][blank_y+1]=board[blank_x][blank_y+1],board[blank_x][blank_y]
+        board[blankx][blanky], board[blankx][blanky + 1] = board[blankx][blanky + 1], board[blankx][blanky]
     elif move == DOWN:
-        board[blank_x][blank_y], board[blank_x][blank_y - 1] = board[blank_x][blank_y - 1], board[blank_x][blank_y]
+        board[blankx][blanky], board[blankx][blanky - 1] = board[blankx][blanky - 1], board[blankx][blanky]
     elif move == LEFT:
-        board[blank_x][blank_y], board[blank_x + 1][blank_y] = board[blank_x + 1][blank_y], board[blank_x][blank_y]
+        board[blankx][blanky], board[blankx + 1][blanky] = board[blankx + 1][blanky], board[blankx][blanky]
     elif move == RIGHT:
-        board[blank_x][blank_y], board[blank_x - 1][blank_y] = board[blank_x - 1][blank_y], board[blank_x][blank_y]
+        board[blankx][blanky], board[blankx - 1][blanky] = board[blankx - 1][blanky], board[blankx][blanky]
 
-def is_valid_move(board,move):
-    """移动合法性判断"""
-    blank_x,blank_y = get_blank_index(board)
-    return (move == UP and blank_y!=BOARD_SIZE-1) \
-           or (move == DOWN and blank_y !=0)  \
-           or (move == LEFT and blank_x != BOARD_SIZE - 1) \
-           or (move == RIGHT and blank_x != 0)
 
-def get_random_move(board,last_move=None):
-    """滑块随机移动"""
-    vaild_moves=[UP,DOWN,LEFT,RIGHT]
-    # 移动方向筛选(排除相邻两次上下、左右移动和不合法移动）
-    if last_move == UP or not is_valid_move(board,DOWN):
-        vaild_moves.remove(DOWN)
-    if last_move == DOWN or not is_valid_move(board,UP):
-        vaild_moves.remove(UP)
-    if last_move == LEFT or not is_valid_move(board, RIGHT):  # 排除左右重复移动和向右不能移动选项
-        vaild_moves.remove(RIGHT)
-    if last_move == RIGHT or not is_valid_move(board, LEFT):
-        vaild_moves.remove(LEFT)
-    return random.choice(vaild_moves)
+def isValidMove(board, move):
+    # 方块不合法移动判断
+    blankx, blanky = getBlankPosition(board)
+    return (move == UP and blanky != len(board[0]) - 1) or \
+            (move == DOWN and blanky != 0) or \
+            (move == LEFT and blankx != len(board) - 1) or \
+            (move == RIGHT and blankx != 0)
 
-def get_left_top_of_tile_l(tile_x,tile_y):
-    """根据滑块索引返回其像素缩值"""
-    left = X_MARGIN_l + (tile_x * TILE_SIZE) + (tile_x - 1)
-    top  = Y_MARGIN + (tile_y*TILE_SIZE) + (tile_y-1)
-    return (left,top)
 
-def get_left_top_of_tile_r(tile_x,tile_y):
-    """根据滑块索引返回其像素缩值"""
-    left = X_MARGIN_r + (tile_x * TILE_SIZE) + (tile_x - 1)
-    top  = Y_MARGIN + (tile_y*TILE_SIZE) + (tile_y-1)
-    return (left,top)
+def getRandomMove(board, lastMove=None):
+    """返回一个随机移动方向"""
+    # lastMove:上次移动记录
+    # start with a full list of all four moves
+    validMoves = [UP, DOWN, LEFT, RIGHT]
 
-def get_spot_clicked(board,x,y):
-    '''根据像素坐标找到索引'''
-    for tile_x in range(BOARD_SIZE):
-        for tile_y in range(BOARD_SIZE):
-            left_r,top_r=get_left_top_of_tile_r(tile_x,tile_y)
-            left_l,top_l=get_left_top_of_tile_l(tile_x, tile_y)
-            tile_rect_l=pygame.Rect(left_l, top_l, TILE_SIZE, TILE_SIZE) #创建坐标矩形
-            tile_rect_r=pygame.Rect(left_r, top_r, TILE_SIZE, TILE_SIZE)
-            if tile_rect_l.collidepoint(x, y) or tile_rect_r.collidepoint(x,y): #判断像素坐标点是否在矩形内部
-                return (tile_x,tile_y) #返回数据坐标
-    return (None,None)
+    # 排除上下重复移动和上下不合法移动
+    if lastMove == UP or not isValidMove(board, DOWN):
+        validMoves.remove(DOWN)
+    if lastMove == DOWN or not isValidMove(board, UP):
+        validMoves.remove(UP)
+    # 排除左右重复移动和左右不合法移动
+    if lastMove == LEFT or not isValidMove(board, RIGHT):
+        validMoves.remove(RIGHT)
+    if lastMove == RIGHT or not isValidMove(board, LEFT):
+        validMoves.remove(LEFT)
+
+    # return a random move from the list of remaining moves
+    return random.choice(validMoves)
+
+
+def getLeftTopOfTile(tileX, tileY):
+    """根据索引返回像素坐标"""
+    # tileX-1:格子间距
+    left = XMARGIN+4 + (tileX * TILESIZE) + (tileX - 1)
+    top = YMARGIN+4 + (tileY * TILESIZE) + (tileY - 1)
+    return (left, top)
+
+def getLeftTopOfTile_r(tileX, tileY):
+    """根据索引返回像素坐标"""
+    # tileX-1:格子间距
+    left = XMARGIN_r+4 + (tileX * TILESIZE) + (tileX - 1)
+    top = YMARGIN+4 + (tileY * TILESIZE) + (tileY - 1)
+    return (left, top)
+
+
+def getSpotClicked(board, x, y):
+    # 根据像素坐标找到数据索引
+    # from the x & y pixel coordinates, get the x & y board coordinates
+    for tileX in range(len(board)):
+        for tileY in range(len(board[0])):
+            left, top = getLeftTopOfTile(tileX, tileY)
+            tileRect = pygame.Rect(left, top, TILESIZE, TILESIZE)
+            if tileRect.collidepoint(x, y):  # 判断像素坐标是否在矩形内
+                return (tileX, tileY)   # 返回索引
+    return (None, None)
+
+def getSpotClicked_r(board, x, y):
+    # 根据像素坐标找到数据索引
+    # from the x & y pixel coordinates, get the x & y board coordinates
+    for tileX in range(len(board)):
+        for tileY in range(len(board[0])):
+            left_r, top_r = getLeftTopOfTile_r(tileX, tileY)
+            tileRect_r = pygame.Rect(left_r, top_r, TILESIZE, TILESIZE)
+            if tileRect_r.collidepoint(x, y):  # 判断像素坐标是否在矩形内
+                return (tileX, tileY)   # 返回索引
+    return (None, None)
+
 
 
